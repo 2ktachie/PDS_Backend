@@ -26,6 +26,7 @@
     "pg": "^8.14.0",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.6",
+    "trial": "file:",
     "uuid": "^11.1.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
