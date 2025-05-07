@@ -1,6 +1,7 @@
 const express = require("express");
 
 const authRouter = require('./routes/authRoutes');
+const payslipRouter = require('./routes/payslipRoutes');
 
 
 const app = express();
@@ -11,6 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // routes
 app.use('/api/auth', authRouter);
+app.use('/api/payslip', payslipRouter);
 
 
 // Root route

@@ -22,8 +22,8 @@ const {
   phone_number,
   department, 
   password, 
-  role = 'USER', 
-  active = 'True' 
+  role, 
+  active
 } = req.body;
 
 // Basic validation
@@ -145,7 +145,7 @@ for (const [index, userData] of results.entries()) {
       department: userData.department,
       password: hashedPassword,
       role: userData.role || 'USER',
-      active: userData.active === 'FALSE' ? false : true // Convert to boolean
+      active: userData.active 
     });
 
     successRecords.push({
@@ -240,7 +240,7 @@ try {
     department: userData.department,
     password: userData.password, // Note: Hash this in production
     role: userData.role || 'USER',
-    active: userData.active || 'True'
+    active: userData.active || true
   });
 
   successRecords.push({
@@ -320,7 +320,7 @@ const login = async (req, res) => {
     }
 
     // Check if account is active
-    if (user.active !== 'True') {
+    if (user.active !== true) {
       return res.status(403).json({
         success: false,
         error: 'Account is inactive. Please contact your administrator.'
