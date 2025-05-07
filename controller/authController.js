@@ -34,10 +34,15 @@ if (!first_name || !last_name || !email || !nat_id || !phone_number || !departme
 }
 
 // Check if user already exists
-const existingUser = await users.findOne({ where: { nat_id } });
+const existingUser = await users.findOne({ where: {
+  [Op.or]: [
+    { nat_id: nat_id },
+    { email: email },
+    { phone_number: phone_number }
+] } });
 if (existingUser) {
   return res.status(409).json({ 
-    error: 'User with this national ID already exists' 
+    error: 'User with this email or national ID or phone number already exists' 
   });
 }
 
