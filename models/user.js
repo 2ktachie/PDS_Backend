@@ -3,73 +3,77 @@ const { Model } = require('sequelize');
 const bcrypt = require('bcrypt');
 
 module.exports = (sequelize, DataTypes) => {
-  const user = sequelize.define('users', {
-    id: {
+  class User extends Model {
+    static associate(models) {
+      // ...existing associations...
+    }
+  }
+
+  User.init({
+    emailVerified: {
+      type: DataTypes.BOOLEAN,
       allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER
+      defaultValue: false
+    },
+    emailVerificationToken: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    emailVerificationExpires: {
+      type: DataTypes.DATE,
+      allowNull: true
     },
     first_name: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
     },
     last_name: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
     },
     email: {
       type: DataTypes.STRING,
-      unique: true
-    },
-    nat_id: {
-      type: DataTypes.STRING,
-      unique: true
-    },
-    phone_number: {
-      type: DataTypes.STRING,
-      unique:true
-    },
-    department: {
-      type: DataTypes.STRING
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true
+      }
     },
     password: {
       type: DataTypes.STRING,
-      set(value) {
-        const salt = bcrypt.genSaltSync(10);
-        const hash = bcrypt.hashSync(value, salt);
-        this.setDataValue('password', hash);
-      }
+      allowNull: false
     },
     role: {
-      type: DataTypes.ENUM("USER", "HR", "ADMIN"),
-      defaultValue: "USER"
+      type: DataTypes.ENUM('USER', 'HR', 'ADMIN'),
+      defaultValue: 'USER'
     },
     active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
-    },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE
     }
   }, {
+    sequelize,
+    modelName: 'User',
+    timestamps: true,
     hooks: {
-      beforeUpdate: (user) => {
+      beforeCreate: async (user) => {
+        if (user.password) {
+          user.password = await bcrypt.hash(user.password, 10);
+        }
+      },
+      beforeUpdate: async (user) => {
         if (user.changed('password')) {
-          const salt = bcrypt.genSaltSync(10);
-          user.password = bcrypt.hashSync(user.password, salt);
+          user.password = await bcrypt.hash(user.password, 10);
         }
       }
     }
   });
 
-  // Instance method to compare passwords
-  user.prototype.validPassword = function(password) {
-    return bcrypt.compareSync(password, this.password);
-  };
-
-  return user;
+  return User;
 };

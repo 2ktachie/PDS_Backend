@@ -3,6 +3,10 @@ const router = express.Router();
 const {
   register,
   login,
+  logout,
+  refreshToken,
+  verifyEmail,
+  resendVerification,
   getUsers,
   getUserById,
   getAllUsers,
@@ -53,9 +57,15 @@ router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);
 router.post('/forgot-password', authLimiter, forgotPassword);
 router.post('/reset-password/:token', authLimiter, resetPassword);
+router.post('/refresh-token', authLimiter, refreshToken);
+router.get('/verify-email/:token', verifyEmail);
+router.post('/resend-verification', authLimiter, resendVerification);
 
 // Protected Routes (require authentication)
 router.use(authMiddleware.verifyToken);
+
+// Authentication Routes
+router.post('/logout', logout);
 
 // User Profile Routes
 router.get('/me', getCurrentUser);

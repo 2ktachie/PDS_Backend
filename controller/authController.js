@@ -655,26 +655,212 @@ const changePassword = async (req, res) => {
   }
 }
 
+/**
+ * User logout - invalidate token
+ */
+const logout = async (req, res) => {
+  try {
+    // Get token from header
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: 'No token provided'
+      });
+    }
 
+    // In a real implementation, you might want to add the token to a blacklist
+    // or invalidate it in your database
 
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+};
 
+/**
+ * Refresh access token using refresh token
+ */
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'Refresh token is required'
+      });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    
+    // Find user
+    const user = await users.findByPk(decoded.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Generate new access token
+    const newToken = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        department: user.department
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    res.status(200).json({
+      success: true,
+      token: newToken
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(401).json({
+      success: false,
+      error: 'Invalid or expired refresh token'
+    });
+  }
+};
+
+/**
+ * Verify email address using verification token
+ */
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Hash token for comparison
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    // Find user with valid verification token
+    const user = await users.findOne({
+      where: {
+        emailVerificationToken: hashedToken,
+        emailVerificationExpires: { [Op.gt]: Date.now() }
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or expired verification token'
+      });
+    }
+
+    // Update user verification status
+    await user.update({
+      emailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully'
+    });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+};
+
+/**
+ * Resend email verification token
+ */
+const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Find user
+    const user = await users.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'No user found with that email'
+      });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already verified'
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(verificationToken)
+      .digest('hex');
+
+    // Update user with new verification token
+    await user.update({
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    // Create verification URL
+    const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email/${verificationToken}`;
+
+    // Send verification email
+    await sendEmail({
+      email: user.email,
+      subject: 'Email Verification',
+      message: `Please verify your email address by clicking: ${verificationUrl}`
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Verification email sent'
+    });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+};
+
+// Update the module exports to include new controllers
 module.exports = {
-register,
-login,
-
-getUsers,
-getUserById,
-getAllUsers,
-getCurrentUser,
-
-updateProfile,
-updateUserStatus,
-
-resetPassword,
-forgotPassword,
-changePassword,
-
-importFromExcel,
-importFromCSV,
-
+  register,
+  login,
+  logout,
+  refreshToken,
+  verifyEmail,
+  resendVerification,
+  getUsers,
+  getUserById,
+  getAllUsers,
+  getCurrentUser,
+  updateProfile,
+  updateUserStatus,
+  resetPassword,
+  forgotPassword,
+  changePassword,
+  importFromExcel,
+  importFromCSV,
 };
