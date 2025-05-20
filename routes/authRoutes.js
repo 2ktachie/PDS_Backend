@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   register,
   login,
-  getUsers,
+  
   getUserById,
   getAllUsers,
   getCurrentUser,
@@ -67,8 +67,8 @@ router.post('/import/csv', authMiddleware.checkRole(['ADMIN']), upload.single('f
 router.post('/import/excel', authMiddleware.checkRole(['ADMIN']), upload.single('file'), importFromExcel);
 
 // Admin User Management Routes
-router.get('/users', authMiddleware.checkRole(['ADMIN', 'HR']), getUsers);
-router.get('/users/all', authMiddleware.checkRole(['ADMIN']), getAllUsers);
+
+router.get('/users/all', authMiddleware.checkRole(['ADMIN', 'HR']), getAllUsers);
 router.get('/users/:id', authMiddleware.checkRole(['ADMIN', 'HR']), getUserById);
 router.put('/users/:id/status', authMiddleware.checkRole(['ADMIN']), updateUserStatus);
 
