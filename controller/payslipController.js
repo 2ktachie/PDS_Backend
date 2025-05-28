@@ -1,4 +1,5 @@
 const { users, payslips } = require('../models');
+const { Op } = require('sequelize');
 const csv = require('csv-parser');
 const xlsx = require('xlsx');
 const fs = require('fs');
