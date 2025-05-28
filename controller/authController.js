@@ -836,22 +836,25 @@ const resendVerification = async (req, res) => {
 
 // Update the module exports to include new controllers
 module.exports = {
-register,
-login,
-
-
-getUserById,
-getAllUsers,
-getCurrentUser,
-
-updateProfile,
-updateUserStatus,
-
-resetPassword,
-forgotPassword,
-changePassword,
-
-importFromExcel,
-importFromCSV,
-
+  register,
+  login,
+  logout,
+  refreshToken,
+  
+  getUserById,
+  getAllUsers,
+  getCurrentUser,
+  
+  updateProfile,
+  updateUserStatus,
+  
+  resetPassword,
+  forgotPassword,
+  changePassword,
+  
+  verifyEmail,
+  resendVerification,
+  
+  importFromExcel,
+  importFromCSV,
 };
