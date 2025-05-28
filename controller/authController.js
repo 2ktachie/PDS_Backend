@@ -82,20 +82,7 @@ return res.status(500).json({
 };
 
 
-const getUsers = async (req, res) => {
-try {
-const users = await users.findAll({
-  attributes: { exclude: ['password'] } // Exclude password from response
-});
-return res.status(200).json(users);
-} catch (error) {
-console.error('Error fetching users:', error);
-return res.status(500).json({ 
-  error: 'Internal server error',
-  details: error.message 
-});
-}
-};
+
 
 
 const importFromCSV = async (req, res) => {
@@ -374,10 +361,11 @@ const login = async (req, res) => {
 }
 
 
+
 const getCurrentUser = async (req, res) => {
   try {
-    const user = await user.findByPk(req.user.id, {
-      attributes: { exclude: ['password', 'passwordResetToken', 'passwordResetExpires'] }
+    const user = await users.findByPk(req.user.id, {
+      attributes: { exclude: ['password'] }
     });
     
     if (!user) {
@@ -398,12 +386,88 @@ const getCurrentUser = async (req, res) => {
     });
   }
 }
+// Admin: Get all users
+const getAllUsers = async (req, res) => {
+  try {
+    const user = await users.findAll({
+      attributes: { exclude: ['password'] }
+    });
+    res.status(200).json({
+      success: true,
+      count: user.length,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+}
+
+// Admin: Get user by ID
+const getUserById = async (req, res) => {
+  try {
+    const user = await users.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+}
+
+// Admin: Update user status
+const updateUserStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const user = await users.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    await users.update({ active: status });
+    
+    res.status(200).json({
+      success: true,
+      message: 'User status updated',
+      data: {
+        id: user.id,
+        active: user.active
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+}
+
 
 // Update user profile
 const updateProfile = async (req, res) => {
   try {
     const { first_name, last_name, phone_number, department } = req.body;
-    const user = await user.findByPk(req.user.id);
+    const user = await users.findByPk(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -475,9 +539,9 @@ const forgotPassword = async (req, res) => {
       message: 'Password reset link sent to email'
     });
   } catch (error) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save();
+    users.passwordResetToken = undefined;
+    users.passwordResetExpires = undefined;
+    await users.save();
 
     res.status(500).json({
       success: false,
@@ -524,81 +588,7 @@ const resetPassword = async (req, res) => {
   }
 }
 
-// Admin: Get all users
-const getAllUsers = async (req, res) => {
-  try {
-    const users = await user.findAll({
-      attributes: { exclude: ['password', 'passwordResetToken', 'passwordResetExpires'] }
-    });
-    res.status(200).json({
-      success: true,
-      count: users.length,
-      data: users
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error'
-    });
-  }
-}
 
-// Admin: Get user by ID
-const getUserById = async (req, res) => {
-  try {
-    const user = await user.findByPk(req.params.id, {
-      attributes: { exclude: ['password', 'passwordResetToken', 'passwordResetExpires'] }
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: user
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error'
-    });
-  }
-}
-
-// Admin: Update user status
-const updateUserStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
-    const user = await user.findByPk(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
-
-    await user.update({ active: status });
-    
-    res.status(200).json({
-      success: true,
-      message: 'User status updated',
-      data: {
-        id: user.id,
-        active: user.active
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error'
-    });
-  }
-}
 
 /**
  * Change user password
@@ -846,21 +836,22 @@ const resendVerification = async (req, res) => {
 
 // Update the module exports to include new controllers
 module.exports = {
-  register,
-  login,
-  logout,
-  refreshToken,
-  verifyEmail,
-  resendVerification,
-  getUsers,
-  getUserById,
-  getAllUsers,
-  getCurrentUser,
-  updateProfile,
-  updateUserStatus,
-  resetPassword,
-  forgotPassword,
-  changePassword,
-  importFromExcel,
-  importFromCSV,
+register,
+login,
+
+
+getUserById,
+getAllUsers,
+getCurrentUser,
+
+updateProfile,
+updateUserStatus,
+
+resetPassword,
+forgotPassword,
+changePassword,
+
+importFromExcel,
+importFromCSV,
+
 };

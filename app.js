@@ -1,10 +1,18 @@
 const express = require("express");
-
+const cors = require('cors')
 const authRouter = require('./routes/authRoutes');
 const payslipRouter = require('./routes/payslipRoutes');
 
 
 const app = express();
+
+app.use(cors({
+  origin: 'http://localhost:5173', // Your Frontend URL
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 
 //middleware
 app.use(express.json());

@@ -1,4 +1,4 @@
-const { payslip, user } = require('../models');
+const { users, payslips } = require('../models');
 const csv = require('csv-parser');
 const xlsx = require('xlsx');
 const fs = require('fs');
@@ -17,7 +17,7 @@ const addSinglePayslip = async (req, res) => {
       }
 
       // Check if user exists
-      const userExists = await user.findOne({ where: { nat_id: payslipData.Nat_ID } });
+      const userExists = await users.findOne({ where: { nat_id: payslipData.Nat_ID } });
       if (!userExists) {
         return res.status(404).json({
           success: false,
@@ -26,7 +26,7 @@ const addSinglePayslip = async (req, res) => {
       }
 
       // Create payslip
-      const newPayslip = await payslip.create(payslipData);
+      const newPayslip = await payslips.create(payslipData);
 
       return res.status(201).json({
         success: true,
@@ -79,13 +79,13 @@ const importPayslipsCSV = async (req, res) => {
           }
 
           // Check if user exists
-          const userExists = await user.findOne({ where: { nat_id: payslipData.Nat_ID } });
+          const userExists = await users.findOne({ where: { nat_id: payslipData.Nat_ID } });
           if (!userExists) {
             throw new Error(`User with Nat_ID ${payslipData.Nat_ID} not found`);
           }
 
           // Create payslip
-          const newPayslip = await payslip.create(payslipData);
+          const newPayslip = await payslips.create(payslipData);
 
           successRecords.push({
             row: index + 1,
@@ -159,13 +159,13 @@ const importPayslipsExcel = async (req, res) => {
           }
 
           // Check if user exists
-          const userExists = await user.findOne({ where: { nat_id: payslipData.Nat_ID } });
+          const userExists = await users.findOne({ where: { nat_id: payslipData.Nat_ID } });
           if (!userExists) {
             throw new Error(`User with Nat_ID ${payslipData.Nat_ID} not found`);
           }
 
           // Create payslip
-          const newPayslip = await payslip.create(payslipData);
+          const newPayslip = await payslips.create(payslipData);
 
           successRecords.push({
             row: index + 1,
@@ -218,7 +218,7 @@ const getUserPayslips = async (req, res) => {
       const { nat_id } = req.params;
 
       // Check if user exists
-      const userExists = await user.findOne({ where: { nat_id } });
+      const userExists = await users.findOne({ where: { nat_id } });
       if (!userExists) {
         return res.status(404).json({
           success: false,
@@ -227,7 +227,7 @@ const getUserPayslips = async (req, res) => {
       }
 
       // Get all payslips for this user
-      const payslips = await payslip.findAll({
+      const payslips = await payslips.findAll({
         where: { Nat_ID: nat_id },
         order: [['Period', 'DESC']]
       });
@@ -263,7 +263,7 @@ const getPayslipById = async (req, res) => {
     try {
       const { id } = req.params;
 
-      const payslipRecord = await payslip.findByPk(id);
+      const payslipRecord = await payslips.findByPk(id);
       if (!payslipRecord) {
         return res.status(404).json({
           success: false,
@@ -272,7 +272,7 @@ const getPayslipById = async (req, res) => {
       }
 
       // Get associated user information
-      const userRecord = await user.findOne({ 
+      const userRecord = await users.findOne({ 
         where: { nat_id: payslipRecord.Nat_ID },
         attributes: ['id', 'first_name', 'last_name', 'email', 'department']
       });
@@ -303,7 +303,7 @@ const updatePayslip = async (req, res) => {
       const { id } = req.params;
       const updateData = req.body;
 
-      const payslipRecord = await payslip.findByPk(id);
+      const payslipRecord = await payslips.findByPk(id);
       if (!payslipRecord) {
         return res.status(404).json({
           success: false,
@@ -344,7 +344,7 @@ const deletePayslip = async (req, res) => {
     try {
       const { id } = req.params;
 
-      const payslipRecord = await payslip.findByPk(id);
+      const payslipRecord = await payslips.findByPk(id);
       if (!payslipRecord) {
         return res.status(404).json({
           success: false,
