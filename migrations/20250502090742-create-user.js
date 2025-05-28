@@ -30,6 +30,9 @@ module.exports = {
       department: {
         type: DataTypes.STRING
       },
+      company: {
+        type: DataTypes.STRING
+      },
       password: {
         type: DataTypes.STRING
       },

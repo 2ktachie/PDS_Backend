@@ -9,24 +9,36 @@ const addSinglePayslip = async (req, res) => {
       const payslipData = req.body;
 
       // Validate required fields
-      if (!payslipData.Period || !payslipData.Nat_ID) {
+      if (!payslipData.user_id || !payslipData.user_ecocash_number) {
         return res.status(400).json({
           success: false,
-          error: 'Period and Nat_ID are required fields'
+          error: 'User ID and EcoCash number are required fields'
         });
       }
 
       // Check if user exists
-      const userExists = await users.findOne({ where: { nat_id: payslipData.Nat_ID } });
-      if (!userExists) {
+      const user = await users.findOne({
+        where: {
+          [Op.or]: [
+            { nat_id: payslipData.user_id },
+            { phone_number: payslipData.user_ecocash_number }
+          ]
+        }
+      });
+
+      if (!user) {
         return res.status(404).json({
           success: false,
-          error: `User with Nat_ID ${payslipData.Nat_ID} not found`
+          error: 'User not found with the provided ID or EcoCash number'
         });
       }
 
-      // Create payslip
-      const newPayslip = await payslips.create(payslipData);
+      // Create payslip with user details
+      const newPayslip = await payslips.create({
+        ...payslipData,
+        user_name: `${user.first_name} ${user.last_name}`,
+        user_email_address: user.email || null
+      });
 
       return res.status(201).json({
         success: true,
@@ -74,32 +86,42 @@ const importPayslipsCSV = async (req, res) => {
       for (const [index, payslipData] of results.entries()) {
         try {
           // Validate required fields
-          if (!payslipData.Period || !payslipData.Nat_ID) {
-            throw new Error('Missing required fields (Period and Nat_ID)');
+          if (!payslipData.user_id || !payslipData.user_ecocash_number) {
+            throw new Error('Missing required fields (user_id and user_ecocash_number)');
           }
 
           // Check if user exists
-          const userExists = await users.findOne({ where: { nat_id: payslipData.Nat_ID } });
+          const userExists = await users.findOne({ where: {
+              [Op.or]: [
+                { nat_id: payslipData.user_id },
+                { phone_number: payslipData.user_ecocash_number }
+              ]
+            }
+          });
           if (!userExists) {
-            throw new Error(`User with Nat_ID ${payslipData.Nat_ID} not found`);
+            throw new Error(`User not found with ID: ${payslipData.user_id} or EcoCash: ${payslipData.user_ecocash_number}`);
           }
 
           // Create payslip
-          const newPayslip = await payslips.create(payslipData);
+          const newPayslip = await payslips.create({
+            ...payslipData,
+            user_name: `${userExists.first_name} ${userExists.last_name}`,
+            user_email_address: userExists.email || null
+          });
 
           successRecords.push({
             row: index + 1,
             id: newPayslip.id,
-            Period: newPayslip.Period,
-            Nat_ID: newPayslip.Nat_ID
+            user_id: newPayslip.user_id,
+            period: newPayslip.payslip_date
           });
         } catch (error) {
           errors.push({
             row: index + 1,
             error: error.message,
             data: {
-              Period: payslipData.Period,
-              Nat_ID: payslipData.Nat_ID
+              user_id: payslipData.user_id,
+              ecocash: payslipData.user_ecocash_number
             }
           });
         }
@@ -154,32 +176,41 @@ const importPayslipsExcel = async (req, res) => {
       for (const [index, payslipData] of results.entries()) {
         try {
           // Validate required fields
-          if (!payslipData.Period || !payslipData.Nat_ID) {
-            throw new Error('Missing required fields (Period and Nat_ID)');
+          if (!payslipData.user_id || !payslipData.user_ecocash_number) {
+            throw new Error('Missing required fields (user_id and user_ecocash_number)');
           }
 
           // Check if user exists
-          const userExists = await users.findOne({ where: { nat_id: payslipData.Nat_ID } });
+          const userExists = await users.findOne({ where: {
+              [Op.or]: [
+                { nat_id: payslipData.user_id },
+                { phone_number: payslipData.user_ecocash_number }
+              ]
+            } });
           if (!userExists) {
-            throw new Error(`User with Nat_ID ${payslipData.Nat_ID} not found`);
+            throw new Error(`User not found with ID: ${payslipData.user_id} or EcoCash: ${payslipData.user_ecocash_number}`);
           }
 
           // Create payslip
-          const newPayslip = await payslips.create(payslipData);
+          const newPayslip = await payslips.create({
+            ...payslipData,
+            user_name: `${userExists.first_name} ${userExists.last_name}`,
+            user_email_address: userExists.email || null
+          });
 
           successRecords.push({
             row: index + 1,
             id: newPayslip.id,
-            Period: newPayslip.Period,
-            Nat_ID: newPayslip.Nat_ID
+            user_id: newPayslip.user_id,
+            period: newPayslip.payslip_date
           });
         } catch (error) {
           errors.push({
             row: index + 1,
             error: error.message,
             data: {
-              Period: payslipData.Period,
-              Nat_ID: payslipData.Nat_ID
+              user_id: payslipData.user_id,
+              ecocash: payslipData.user_ecocash_number
             }
           });
         }
@@ -215,35 +246,27 @@ const importPayslipsExcel = async (req, res) => {
    */
 const getUserPayslips = async (req, res) => {
     try {
-      const { nat_id } = req.params;
+      const { user_id } = req.params;
 
       // Check if user exists
-      const userExists = await users.findOne({ where: { nat_id } });
-      if (!userExists) {
+      const payslip = await payslips.findAll({
+        where: { user_id },
+        order: [['payslip_date', 'DESC']],
+        include: [{
+          association: 'userByNatId',
+          attributes: ['first_name', 'last_name', 'email', 'phone_number']
+        }]
+      });
+      if (!payslip || payslip.length === 0) {
         return res.status(404).json({
           success: false,
-          error: `User with Nat_ID ${nat_id} not found`
+          error: 'No payslips found for this user'
         });
       }
 
-      // Get all payslips for this user
-      const payslips = await payslips.findAll({
-        where: { Nat_ID: nat_id },
-        order: [['Period', 'DESC']]
-      });
-
       return res.status(200).json({
         success: true,
-        data: {
-          user: {
-            id: userExists.id,
-            first_name: userExists.first_name,
-            last_name: userExists.last_name,
-            nat_id: userExists.nat_id,
-            department: userExists.department
-          },
-          payslips
-        }
+        data: payslip
       });
 
     } catch (error) {
@@ -256,14 +279,61 @@ const getUserPayslips = async (req, res) => {
     }
   }
 
-  /**
-   * Get a specific payslip by ID
-   */
+
+const getAllPayslips = async (req, res) => {
+    try {
+      const { page = 1, limit = 20, from_date, to_date } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = {};
+      if (from_date && to_date) {
+        where.payslip_date = {
+          [Op.between]: [new Date(from_date), new Date(to_date)]
+        };
+      }
+
+      const { count, rows } = await payslips.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['payslip_date', 'DESC']],
+        include: [{
+          association: 'userByNatId',
+          attributes: ['first_name', 'last_name', 'email', 'phone_number']
+        }]
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          pages: Math.ceil(count / limit)
+        }
+      });
+
+    } catch (error) {
+      console.error('Error fetching all payslips:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        details: error.message
+      });
+    }
+  }
+
+ 
 const getPayslipById = async (req, res) => {
     try {
       const { id } = req.params;
 
-      const payslipRecord = await payslips.findByPk(id);
+      const payslipRecord = await payslips.findByPk(id, {
+        include: [{
+          association: 'userByNatId',
+          attributes: ['first_name', 'last_name', 'email', 'phone_number', 'nat_id']
+        }]
+      });
       if (!payslipRecord) {
         return res.status(404).json({
           success: false,
@@ -271,18 +341,9 @@ const getPayslipById = async (req, res) => {
         });
       }
 
-      // Get associated user information
-      const userRecord = await users.findOne({ 
-        where: { nat_id: payslipRecord.Nat_ID },
-        attributes: ['id', 'first_name', 'last_name', 'email', 'department']
-      });
-
       return res.status(200).json({
         success: true,
-        data: {
-          payslip: payslipRecord,
-          user: userRecord
-        }
+        data: payslipRecord
       });
 
     } catch (error) {
@@ -295,9 +356,7 @@ const getPayslipById = async (req, res) => {
     }
   }
 
-  /**
-   * Update a payslip
-   */
+
 const updatePayslip = async (req, res) => {
     try {
       const { id } = req.params;
@@ -312,10 +371,10 @@ const updatePayslip = async (req, res) => {
       }
 
       // Don't allow changing Nat_ID as it's linked to a user
-      if (updateData.Nat_ID && updateData.Nat_ID !== payslipRecord.Nat_ID) {
+      if (updateData.user_id || updateData.user_ecocash_number) {
         return res.status(400).json({
           success: false,
-          error: 'Cannot change Nat_ID of a payslip'
+          error: 'Cannot change user identification fields'
         });
       }
 
@@ -337,9 +396,7 @@ const updatePayslip = async (req, res) => {
     }
   }
 
-  /**
-   * Delete a payslip
-   */
+
 const deletePayslip = async (req, res) => {
     try {
       const { id } = req.params;
@@ -375,6 +432,7 @@ module.exports = {
     importPayslipsCSV,
     importPayslipsExcel,
     getUserPayslips,
+    getAllPayslips,
     getPayslipById,
     updatePayslip,
     deletePayslip

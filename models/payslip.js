@@ -1,78 +1,96 @@
 module.exports = (sequelize, DataTypes) => {
   const payslip = sequelize.define(
     "payslips",
+     {
+      user_name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      user_id: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      basic_pay: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      user_commision: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.0,
+      },
+      user_backpay: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.0,
+      },
+      user_grosspay: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      user_ecocash_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      tax_30_percent: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      user_netpay: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      user_email_address: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+          isEmail: true,
+        },
+      },
+      payslip_date: {
+        type: DataTypes.DATEONLY,
+        defaultValue: DataTypes.NOW,
+      },
+      created_at: {
+        allowNull: false,
+        type: DataTypes.DATE,
+      },
+      updated_at: {
+        allowNull: false,
+        type: DataTypes.DATE,
+      },
+    },
     {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: DataTypes.INTEGER
-      },
-      Period: {
-        type: DataTypes.STRING
-      },
-      Nat_ID: {
-        type: DataTypes.STRING
-      },
-      Pay_Method: {
-        type: DataTypes.STRING
-      },
-      Pay_Point: {
-        type: DataTypes.STRING
-      },
-      Cost_Centre: {
-        type: DataTypes.STRING
-      },
-      Int_Grade: {
-        type: DataTypes.STRING
-      },
-      Department: {
-        type: DataTypes.STRING
-      },
-      SSN: {
-        type: DataTypes.STRING
-      },
-      NEC_Grade: {
-        type: DataTypes.STRING
-      },
-      Pay_Rate: {
-        type: DataTypes.DOUBLE
-      },
-      Pay_Method: {
-        type: DataTypes.STRING
-      },
-      Position: {
-        type: DataTypes.STRING
-      },
-      Leave_Bal: {
-        type: DataTypes.FLOAT
-      },
-      Loan_Balance: {
-        type: DataTypes.DOUBLE
-      },
-      Bank: {
-        type: DataTypes.STRING
-      },
-      Acc_No: {
-        type: DataTypes.FLOAT
-      },
-      Date_Engaged: {
-        type: DataTypes.DATE
-      },
-      Pay_day: {
-        type: DataTypes.DATE
-      },
-      createdAt: {
-        allowNull: false,
-        type: DataTypes.DATE
-      },
-      updatedAt: {
-        allowNull: false,
-        type: DataTypes.DATE
-      }
+      sequelize,
+      modelName: 'payslip',
+      tableName: 'payslips',
+      underscored: true,
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+      indexes: [
+        {
+          fields: ['user_id'],
+        },
+        {
+          fields: ['user_ecocash_number'],
+        },
+      ],
+    }
+  );
+
+  payslip.associate = function (models) {
+    payslip.belongsTo(models.users, {
+      foreignKey: 'user_id',
+      targetKey: 'nat_id',
+      as: 'userByNatId',
     });
 
-    return payslip;
+    payslip.belongsTo(models.users, {
+      foreignKey: 'user_ecocash_number',
+      targetKey: 'phone_number',
+      as: 'userByPhoneNumber',
+    });
   };
 
+  return payslip;
+};
   

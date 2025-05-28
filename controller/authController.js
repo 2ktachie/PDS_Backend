@@ -21,6 +21,7 @@ const {
   nat_id, 
   phone_number,
   department, 
+  company, 
   password, 
   role, 
   active
@@ -53,6 +54,7 @@ const newUser = await users.create({
   nat_id,
   phone_number,
   department,
+  company,
   password, // Note: In production, you should hash this before saving
   role,
   active
@@ -68,6 +70,7 @@ return res.status(201).json({
     nat_id: newUser.nat_id,
     phone_number: newUser.phone_number,
     department: newUser.department,
+    company: newUser.company,
     role: newUser.role,
     active: newUser.active
   }
@@ -114,7 +117,7 @@ for (const [index, userData] of results.entries()) {
   try {
     // Validate required fields
     if (!userData.first_name || !userData.last_name || !userData.email || !userData.nat_id || 
-        !userData.phone_number || !userData.department || !userData.password) {
+        !userData.phone_number || !userData.department || !userData.company || !userData.password) {
       throw new Error('Missing required fields');
     }
 
@@ -135,6 +138,7 @@ for (const [index, userData] of results.entries()) {
       nat_id: userData.nat_id,
       phone_number: userData.phone_number,
       department: userData.department,
+      company: userData.company,
       password: hashedPassword,
       role: userData.role || 'USER',
       active: userData.active 
@@ -212,7 +216,7 @@ for (const [index, userData] of results.entries()) {
 try {
   // Validate required fields
   if (!userData.first_name || !userData.last_name || !userData.email || !userData.nat_id || 
-      !userData.phone_number || !userData.department || !userData.password) {
+      !userData.phone_number || !userData.department || !userData.company || !userData.password) {
     throw new Error('Missing required fields');
   }
 
@@ -230,7 +234,8 @@ try {
     nat_id: userData.nat_id,
     phone_number: userData.phone_number,
     department: userData.department,
-    password: userData.password, // Note: Hash this in production
+    company: userData.company,
+    password: userData.password, 
     role: userData.role || 'USER',
     active: userData.active || true
   });

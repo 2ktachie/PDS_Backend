@@ -1,75 +1,75 @@
 'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, DataTypes) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.createTable('payslips', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: DataTypes.INTEGER
+        type: Sequelize.INTEGER
       },
-      Period: {
-        type: DataTypes.STRING
+      user_name: {
+        type: Sequelize.STRING,
+        allowNull: false
       },
-      Nat_ID: {
-        type: DataTypes.STRING
-      },
-      Pay_Method: {
-        type: DataTypes.STRING
-      },
-      Pay_Point: {
-        type: DataTypes.STRING
-      },
-      Cost_Centre: {
-        type: DataTypes.STRING
-      },
-      Int_Grade: {
-        type: DataTypes.STRING
-      },
-      Department: {
-        type: DataTypes.STRING
-      },
-      SSN: {
-        type: DataTypes.STRING
-      },
-      NEC_Grade: {
-        type: DataTypes.STRING
-      },
-      Pay_Rate: {
-        type: DataTypes.DOUBLE
-      },
-      Pay_Method: {
-        type: DataTypes.STRING
-      },
-      Position: {
-        type: DataTypes.STRING
-      },
-      Leave_Bal: {
-        type: DataTypes.FLOAT
-      },
-      Loan_Balance: {
-        type: DataTypes.DOUBLE
-      },
-      Bank: {
-        type: DataTypes.STRING
-      },
-      Acc_No: {
-        type: DataTypes.FLOAT
-      },
-      Date_Engaged: {
-        type: DataTypes.DATE
-      },
-      Pay_day: {
-        type: DataTypes.DATE
-      },
-      createdAt: {
+      user_id: {
+        type: Sequelize.STRING,
         allowNull: false,
-        type: DataTypes.DATE
+        references: {
+          model: 'users',
+          key: 'nat_id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
-      updatedAt: {
+      basic_pay: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false
+      },
+      user_commision: {
+        type: Sequelize.DECIMAL(10, 2),
+        defaultValue: 0.00
+      },
+      user_backpay: {
+        type: Sequelize.DECIMAL(10, 2),
+        defaultValue: 0.00
+      },
+      user_grosspay: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false
+      },
+      user_ecocash_number: {
+        type: Sequelize.STRING
+      },
+      tax_30_percent: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false
+      },
+      user_netpay: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false
+      },
+      user_email_address: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        validate: {
+          isEmail: true
+        }
+      },
+      payslip_date: {
+        type: Sequelize.DATEONLY,
+        defaultValue: Sequelize.NOW
+      },
+      created_at: {
         allowNull: false,
-        type: DataTypes.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
+      },
+      updated_at: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
   },

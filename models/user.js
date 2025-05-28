@@ -31,6 +31,9 @@ module.exports = (sequelize, DataTypes) => {
     department: {
       type: DataTypes.STRING
     },
+    company: {
+      type: DataTypes.STRING
+    },
     password: {
       type: DataTypes.STRING,
       set(value) {
