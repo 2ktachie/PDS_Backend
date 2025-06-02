@@ -34,12 +34,12 @@ router.post('/import/csv', authMiddleware.checkRole(['HR', 'ADMIN']), upload.sin
 router.post('/import/excel', authMiddleware.checkRole(['HR', 'ADMIN']), upload.single('file'), importPayslipsExcel);
 
 // User-specific routes
-router.get('/user/:user_id', getUserPayslips);
+router.get('/user/:user_id',authMiddleware.checkRole(['USER']), getUserPayslips);
+router.get('/:id', authMiddleware.checkRole(['USER','HR', 'ADMIN']), getPayslipById);
 
 // Admin/HR routes
 router.get('/all', authMiddleware.checkRole(['HR', 'ADMIN']), getAllPayslips);
-router.get('/:id', authMiddleware.checkRole(['HR', 'ADMIN']), getPayslipById);
 router.put('/:id', authMiddleware.checkRole(['HR', 'ADMIN']), updatePayslip);
-router.delete('/:id', authMiddleware.checkRole(['ADMIN']), deletePayslip);
+router.delete('/:id', authMiddleware.checkRole(['HR','ADMIN']), deletePayslip);
 
 module.exports = router;
