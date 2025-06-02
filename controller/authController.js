@@ -28,7 +28,7 @@ const {
 } = req.body;
 
 // Basic validation
-if (!first_name || !last_name || !email || !nat_id || !phone_number || !department || !password) {
+if (!first_name || !last_name || !email || !nat_id || !phone_number || !department || !company||  !password) {
   return res.status(400).json({ 
     error: 'Missing required fields (first_name, last_name, email, nat_id, phone_number, password)' 
   });
@@ -230,7 +230,7 @@ try {
   const newUser = await users.create({
     first_name: userData.first_name,
     last_name: userData.last_name,
-    last_name: userData.email,
+    email: userData.email,
     nat_id: userData.nat_id,
     phone_number: userData.phone_number,
     department: userData.department,
